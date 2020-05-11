@@ -1,0 +1,89 @@
+---
+
+#Create Virtual Machine
+
+- name: install needed network manager libs
+  package: 
+    name:
+     - NetworkManager-glib
+     - nm-connection-editor
+     - libsemanage-python
+     - policycoreutils-python
+    state: present
+
+
+#Interface, Bond and Vlan
+- name:  nmcli add Ethernet 
+  nmcli:
+      type: ethernet
+      conn_name: '{{ item.conn_name }}'
+      ip4: '{{ item.ip4 }}'
+      gw4: '{{ item.gw4 }}'
+      state: present
+  with_items:
+      - '{{ nmcli_ethernet }}'
+- name:  nmcli add bond 
+  nmcli:
+      type: bond
+      conn_name: '{{ item.conn_name }}'
+      ip4: '{{ item.ip4 }}'
+      gw4: '{{ item.gw4 }}'
+      mode: '{{ item.mode }}'
+      state: present
+  with_items: "{{ nmcli_bond }}"
+
+- name: nmcli add bond-slave
+  nmcli:
+      type: bond-slave
+      conn_name: '{{ item.conn_name }}'
+      ifname: '{{ item.ifname }}'
+      master: '{{ item.master }}'
+      state: present
+  with_items:
+      - '{{ nmcli_bond_slave }}'
+
+- name:  nmcli vlan
+  nmcli:
+      type: vlan
+      conn_name: '{{ item.conn_name }}'
+      vlanid: '{{ item.vlanid }}' 
+      ip4: '{{ item.ip4 }}'
+      gw4: '{{ item.gw4 }}'     
+      state: present
+  with_items:
+      - '{{ nmcli_Vlan }}'
+
+#read value from item/template
+
+- name: prepare | create bridge interface
+  become: yes  
+  shell: virsh iface-bridge {{ bridge_interface }} {{ bridge_name }}
+
+- name: prepare | create bridge interface 2
+  become: yes  
+  shell: virsh iface-bridge {{ bridge_interface_2 }} {{ bridge_name_2 }}
+  
+
+- name: prepare | create virtual machine from template file
+  become: yes
+  shell: qemu-img create -f qcow2 -b {{ vm_directory}}/{{ template_name }}.qcow2 {{ vm_directory}}/{{ vm_name }}.qcow2
+  when: create_vm  == "yes"
+
+- name: prepare | set hostname
+  become: yes
+  command: virt-customize -a {{ vm_directory}}/{{ vm_name }}.qcow2 --run-command 'hostnamectl set-hostname {{ hostname_full }}'
+  when: create_vm  == "yes"
+  
+
+- name: prepare | boot vm
+  become: yes
+  shell: virt-install --ram {{ memory_size }}  --vcpus {{ cpu_count }}  --os-variant rhel7 --disk path={{ vm_directory}}/{{ vm_name }}.qcow2,device=disk,bus=virtio,format=qcow2 --import --noautoconsole --vnc --bridge {{ bridge_name }} --name {{ vm_name }}
+  when: create_vm  == "yes"
+
+
+
+
+
+
+
+

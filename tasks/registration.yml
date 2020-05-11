@@ -1,0 +1,26 @@
+---
+#Registering system with RHN.
+
+- name: rhn | registering system with RHN
+  command: /usr/bin/subscription-manager register --username={{ rhn_user }} --password={{ rhn_password }} --name={{ hostname_full }}
+  tags:
+    - rhn
+ 
+
+# Find the pool id and atatch
+- name: Find the entitlement pool ID for Red Hat OpenStack Platform director
+  shell: subscription-manager list --available --all --matches="Red Hat OpenStack"
+  register: pool_id
+   
+- name: attach the pool ID
+  shell: subscription-manager attach --pool={{pool_id}}
+
+#Enabling the repos
+- name: rhn | enabling the right repos
+  command: /usr/bin/subscription-manager repos --disable "*" --enable rhel-7-server-rpms --enable rhel-7-server-rh-common-rpms --enable rhel-server-rhscl-7-rpms
+  
+
+ # validation
+- name: repo list
+  command: yum repolist all
+

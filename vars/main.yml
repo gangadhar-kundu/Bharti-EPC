@@ -1,0 +1,58 @@
+---
+# vars file for kvm-install
+rhn_user: "root"
+rhn_password: "Lordsiva@756756"
+hostname_full: "ibm7693"
+template_size: "80G"
+vm_directory: "/virtual_machines"
+template_directory: "/virtual_machines/templates"
+template_name: "rhel_7_template"
+root_password: "redhat"
+create_vm: "yes"
+vm_name: "server_rhel7"
+ip_address: "192.168.1.50"
+netmask: "255.255.255.0"
+gateway: "192.168.1.254"
+dns1: "8.8.8.8"
+ip_address_2: "192.168.1.51"
+
+memory_size: "8096"
+cpu_count: "4"
+bridge_interface: "em1"
+bridge_name: "bridge1"
+bridge_interface_2: "em2"
+bridge_name_2: "bridge2"
+
+# #bond vars
+nmcli_bond:
+  - conn_name: Bond1
+    ip4: '{{ ip_address }}'
+    gw4: ''
+    mode: balance-rr
+  
+nmcli_bond_slave:
+   - conn_name: em1
+     ifname: em1
+     master: Bond1
+   - conn_name: em2
+     ifname: em2
+     master: Bond1
+
+ #ethernet vars
+nmcli_ethernet:
+   - conn_name: em1
+     ifname: em1
+     ip4: '{{ ip_address }}'
+     gw4: '{{ gateway }}'
+   - conn_name: em2
+     ifname: em2
+     ip4: '{{ ip_address_2 }}'
+     gw4: '{{ gateway }}'
+
+nmcli_Vlan:
+  -  conn_name: Vlan1
+     ip4: '{{ ip_address }}'
+     gw4: ''
+     vlanid: 100
+     
+
